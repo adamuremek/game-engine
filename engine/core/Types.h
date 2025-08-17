@@ -31,6 +31,10 @@ enum class ActionState {
     Released
 };
 
+enum class InputType {
+    Key,
+    MouseButton
+};
 
 enum class KeyCode {
     // Letters

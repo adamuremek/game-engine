@@ -7,12 +7,11 @@ App::App(const std::shared_ptr<World> &world)
     : m_world(world)
 {}
 
-
 void App::init() {
     std::cout << "Initializing App..." << std::endl;
 
     // Create the window
-    m_window = std::make_unique<Window>();
+    m_window = std::make_shared<Window>();
     if (!m_window->init("BGFX Engine", 1920, 1080, false)) {
         std::cerr << "Failed to create window." << std::endl;
         return;
@@ -25,8 +24,12 @@ void App::init() {
         std::cerr << "Failed to initialize renderer" << std::endl;
         return;
     }
-    std::cout << "App Initialized!" << std::endl;
 
+    // Create input manager
+    m_input_manager = std::make_unique<InputManager>(m_window);
+    m_input_manager->init();
+
+    std::cout << "App Initialized!" << std::endl;
     m_initialized = true;
 }
 
@@ -37,9 +40,10 @@ void App::tick() {
         return;
     }
 
-    m_window->poll_events();
+    // Poll GLFW events and handle input actions
+    m_input_manager->update();
 
-    // Execute buffered mutate commands
+    // Execute buffered mutate commands for the world
     m_world->execute_commands();
 
     // Draw the frame

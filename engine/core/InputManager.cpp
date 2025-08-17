@@ -1,11 +1,17 @@
 #include "InputManager.h"
+
+#include <iostream>
 #include <GLFW/glfw3.h>
 
 constexpr int MOUSE_BUTTON_OFFSET = 1000;
 
-void InputManager::init(std::shared_ptr<Window> window) {
-    m_window = window;
+InputManager::InputManager(const std::shared_ptr<Window> &window)
+    :   m_window(window),
+        m_current_mouse_pos(0.0f, 0.0f),
+        m_previous_mouse_pos(0.0f, 0.0f)
+{}
 
+void InputManager::init() {
     glfwSetWindowUserPointer(m_window->get_glfw_window(), this);
 
     // Set GLFW callbacks
@@ -14,60 +20,133 @@ void InputManager::init(std::shared_ptr<Window> window) {
     glfwSetCursorPosCallback(m_window->get_glfw_window(), cursor_position_callback);
 }
 
-
 void InputManager::update() {
+    // Update preivous states
     m_previous_key_states = m_current_key_states;
     m_previous_mouse_pos = m_current_mouse_pos;
+    m_previous_action_states = m_action_states;
 
+    // Poll events from glfw
     glfwPollEvents();
+
+    // Process actions and trigger callbacks
+    Vec2 mouse_delta = get_mouse_delta();
+
+    for (auto& pair: m_actions) {
+        auto& action = pair.second;
+        bool is_active = false;
+
+        // Check if any of the action's compound bindings are met
+        for (const auto& compound : action.compounds) {
+            if (is_compound_active(compound)) {
+                is_active = true;
+                break;
+            }
+        }
+
+        // Determine the current state of the action
+        ActionState previous_state = m_previous_action_states.count(action.name)
+            ? m_previous_action_states[action.name] : ActionState::Idle;
+        ActionState current_state = ActionState::Idle;
+
+        if (is_active) {
+            if (previous_state == ActionState::Idle || previous_state == ActionState::Released) {
+                current_state = ActionState::Pressed;
+            } else {
+                current_state = ActionState::Held;
+            }
+        } else {
+            if (previous_state == ActionState::Pressed || previous_state == ActionState::Held) {
+                current_state = ActionState::Released;
+            } else {
+                current_state = ActionState::Idle;
+            }
+        }
+
+        m_action_states[action.name] = current_state;
+
+        // Fire callbacks based on the new state
+        switch (current_state) {
+            case ActionState::Pressed:
+                if (action.on_press) {
+                    action.on_press();
+                }
+                break;
+            case ActionState::Released:
+                if (action.on_release) {
+                    action.on_release();
+                }
+                break;
+            case ActionState::Held:
+                if (action.on_hold) {
+                    action.on_hold();
+                }
+                break;
+            default:
+                break;
+        }
+
+        // Fire continuous callback if the action is active and has one
+        if (is_active && action.on_continuous) {
+            action.on_continuous(mouse_delta);
+        }
+    }
 }
 
 void InputManager::add_action(const std::string &name, KeyCode default_key) {
-    int bindingCode = static_cast<int>(default_key);
-    if (m_actions.find(name) == m_actions.end()) {
-        m_actions[name] = InputAction{name, {bindingCode}};
-    } else {
-        m_actions[name].bindings.push_back(bindingCode);
-    }
+    InputBinding binding = {InputType::Key, static_cast<int>(default_key)};
+    add_action(name, CompoundBinding{{binding}});
 }
 
 void InputManager::add_action(const std::string &name, MouseButton default_btn) {
-    // Apply the offset to distinguish mouse buttons from keys.
-    int bindingCode = static_cast<int>(default_btn) + MOUSE_BUTTON_OFFSET;
+    int code = static_cast<int>(default_btn) + MOUSE_BUTTON_OFFSET;
+    InputBinding binding = {InputType::MouseButton, code};
+    add_action(name, CompoundBinding{{binding}});
+}
+
+void InputManager::add_action(const std::string &name, CompoundBinding binding) {
     if (m_actions.find(name) == m_actions.end()) {
-        m_actions[name] = InputAction{name, {bindingCode}};
+        m_actions[name] = InputAction{name, {binding}};
     } else {
-        m_actions[name].bindings.push_back(bindingCode);
+        m_actions[name].compounds.push_back(binding);
     }
 }
 
+void InputManager::register_callback(const std::string &name, ActionState state, std::function<void()> callback) {
+    auto it = m_actions.find(name);
+    if (it != m_actions.end()) {
+        switch (state) {
+            case ActionState::Pressed:
+                it->second.on_press = callback;
+                break;
+            case ActionState::Released:
+                it->second.on_release = callback;
+                break;
+            case ActionState::Held:
+                it->second.on_hold = callback;
+                break;
+            default:
+                break;
+        }
+    } else {
+        std::cerr << "Warning: Attempted to register callback for non-existent action: " << name << std::endl;
+    }
+}
 
+void InputManager::register_continuous_callback(const std::string &name, std::function<void(Vec2)> callback) {
+    auto it = m_actions.find(name);
+    if (it != m_actions.end()) {
+        it->second.on_continuous = callback;
+    } else {
+        std::cerr << "Warning: Attempted to register continuous callback for non-existent action: " << name << std::endl;
+    }
+}
 
 ActionState InputManager::get_action_state(const std::string &name) {
-    auto it = m_actions.find(name);
-    if (it == m_actions.end()) {
-        return ActionState::Idle; // Action not found
+    if (m_action_states.count(name)) {
+        return m_action_states[name];
     }
-
-    const auto& action = it->second;
-
-    for (int binding : action.bindings) {
-        // Check if the key/button exists in our state maps.
-        bool is_currently_pressed = m_current_key_states.count(binding) && m_current_key_states[binding] == GLFW_PRESS;
-        bool was_previously_pressed = m_previous_key_states.count(binding) && m_previous_key_states[binding] == GLFW_PRESS;
-
-        if (is_currently_pressed && !was_previously_pressed) {
-            return ActionState::Pressed; // Pressed this frame
-        }
-        if (is_currently_pressed && was_previously_pressed) {
-            return ActionState::Held; // Held from previous frame
-        }
-        if (!is_currently_pressed && was_previously_pressed) {
-            return ActionState::Released; // Released this frame
-        }
-    }
-
-    return ActionState::Idle; // No bindings are active
+    return ActionState::Idle;
 }
 
 bool InputManager::is_action_pressed(const std::string &name) {
@@ -83,7 +162,6 @@ bool InputManager::is_action_released(const std::string &name) {
     return get_action_state(name) == ActionState::Released;
 }
 
-
 Vec2 InputManager::get_mouse_position() {
     return m_current_mouse_pos;
 }
@@ -92,27 +170,26 @@ Vec2 InputManager::get_mouse_delta() {
     return m_current_mouse_pos - m_previous_mouse_pos;
 }
 
-void InputManager::handle_key(int key, int action) {
-    if (action == GLFW_PRESS) {
-        m_current_key_states[key] = GLFW_PRESS;
-    } else if (action == GLFW_RELEASE) {
-        m_current_key_states[key] = GLFW_RELEASE;
+
+
+bool InputManager::is_compound_active(const CompoundBinding &compound) {
+    // Check if all required kes/buttons are held down
+    for (const auto& binding : compound.bindings) {
+        bool is_held = m_current_key_states.count(binding.code) && m_current_key_states[binding.code] == GLFW_PRESS;
+        if (!is_held) {
+            return false;
+        }
     }
-}
 
-void InputManager::handle_mouse_button(int button, int action) {
-    if (action == GLFW_PRESS) {
-        m_current_key_states[button] = GLFW_PRESS;
-    } else if (action == GLFW_RELEASE) {
-        m_current_key_states[button] = GLFW_RELEASE;
+    // If it also requires mouse movement, check the delta
+    if (compound.requires_mouse_move) {
+        if (get_mouse_delta().x == 0.0f && get_mouse_delta().y == 0.0f) {
+            return false;
+        }
     }
+
+    return true;
 }
-
-void InputManager::handle_cursor_position(double xpos, double ypos) {
-    m_current_mouse_pos = glm::vec2(static_cast<float>(xpos), static_cast<float>(ypos));
-}
-
-
 
 KeyCode InputManager::translate_glfw_key(int glfw_key) {
     switch (glfw_key) {
@@ -161,9 +238,6 @@ MouseButton InputManager::translate_glfw_mouse_button(int glfw_mouse_button) {
     }
 }
 
-
-
-
 void InputManager::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (InputManager* manager = static_cast<InputManager*>(glfwGetWindowUserPointer(window))) {
         manager->handle_key(key, action);
@@ -182,5 +256,15 @@ void InputManager::cursor_position_callback(GLFWwindow *window, double xpos, dou
     }
 }
 
+void InputManager::handle_key(int key, int action) {
+    m_current_key_states[key] = action;
+}
 
+void InputManager::handle_mouse_button(int button, int action) {
+    m_current_key_states[button + MOUSE_BUTTON_OFFSET] = action;
+}
+
+void InputManager::handle_cursor_position(double xpos, double ypos) {
+    m_current_mouse_pos = Vec2(static_cast<float>(xpos), static_cast<float>(ypos));
+}
 
