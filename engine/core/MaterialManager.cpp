@@ -55,7 +55,7 @@ bgfx::ShaderHandle MaterialManager::load_shader_bin(const std::string &file_path
 }
 
 std::shared_ptr<Material> MaterialManager::load_from_id(const std::string &material_id) {
-    fs::path shader_dir = "C:/Users/aruem/Desktop/Game/shaders";
+    fs::path shader_dir = "C:/Users/aruem/Desktop/game-engine/shaders";
     fs::path mat_dir = shader_dir / material_id;
 
     if (!fs::exists(mat_dir) || !fs::is_directory(mat_dir)) {

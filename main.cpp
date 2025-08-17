@@ -22,7 +22,7 @@ int main() {
     world->add_component(cp, ComponentType::Transform);
     world->add_component(cp, ComponentType::Model);
     world->set_rotation(cp, Vec3(-90.0f, 0.0f, 0.0f));
-    world->load_mesh(cp, "C:/Users/aruem/Desktop/Game/models/Plane.fbx");
+    world->load_mesh(cp, "C:/Users/aruem/Desktop/game-engine/models/Plane.fbx");
     world->load_material(cp, "coordinate_plane");
 
 
@@ -30,7 +30,7 @@ int main() {
     Entity cube = world->create_entity();
     world->add_component(cube, ComponentType::Transform);
     world->add_component(cube, ComponentType::Model);
-    world->load_mesh(cube, "C:/Users/aruem/Desktop/Game/models/Cube.fbx");
+    world->load_mesh(cube, "C:/Users/aruem/Desktop/game-engine/models/Cube.fbx");
     world->load_material(cube, "color");
 
 
