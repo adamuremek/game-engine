@@ -6,6 +6,7 @@ World::World()
         m_command_queue(std::make_unique<CommandQueue>()),
         m_entity_pool(std::make_unique<EntityPool>(MAX_ENTITIES)),
         m_entity_sparse_set(std::make_unique<EntitySparseSet>(MAX_ENTITIES)),
+        m_input_manager(std::make_unique<InputManager>()),
         m_mesh_manager(std::make_unique<MeshManager>()),
         m_material_manager(std::make_unique<MaterialManager>()),
 
@@ -103,6 +104,11 @@ void World::set_active_camera(Entity entity) {
         m_active_camera = entity;
     });
 }
+
+void World::set_input_manager_window(const std::shared_ptr<Window> &window) {
+    m_input_manager->set_window(window);
+}
+
 
 void World::set_position(Entity entity, Vec3 pos) {
     m_command_queue->submit([this, entity, pos] {

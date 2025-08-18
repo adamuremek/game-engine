@@ -5,19 +5,25 @@
 
 constexpr int MOUSE_BUTTON_OFFSET = 1000;
 
-InputManager::InputManager(const std::shared_ptr<Window> &window)
-    :   m_window(window),
-        m_current_mouse_pos(0.0f, 0.0f),
+InputManager::InputManager()
+    :   m_current_mouse_pos(0.0f, 0.0f),
         m_previous_mouse_pos(0.0f, 0.0f)
 {}
 
-void InputManager::init() {
-    glfwSetWindowUserPointer(m_window->get_glfw_window(), this);
+void InputManager::set_window(const std::shared_ptr<Window> &window) {
+    if (m_window) {
+        glfwSetWindowUserPointer(m_window->get_glfw_window(), nullptr);
+    }
+    m_window = window;
 
-    // Set GLFW callbacks
-    glfwSetKeyCallback(m_window->get_glfw_window(), key_callback);
-    glfwSetMouseButtonCallback(m_window->get_glfw_window(), mouse_button_callback);
-    glfwSetCursorPosCallback(m_window->get_glfw_window(), cursor_position_callback);
+    if (m_window) {
+        glfwSetWindowUserPointer(m_window->get_glfw_window(), this);
+
+        // Set GLFW callbacks
+        glfwSetKeyCallback(m_window->get_glfw_window(), key_callback);
+        glfwSetMouseButtonCallback(m_window->get_glfw_window(), mouse_button_callback);
+        glfwSetCursorPosCallback(m_window->get_glfw_window(), cursor_position_callback);
+    }
 }
 
 void InputManager::update() {
@@ -25,9 +31,6 @@ void InputManager::update() {
     m_previous_key_states = m_current_key_states;
     m_previous_mouse_pos = m_current_mouse_pos;
     m_previous_action_states = m_action_states;
-
-    // Poll events from glfw
-    glfwPollEvents();
 
     // Process actions and trigger callbacks
     Vec2 mouse_delta = get_mouse_delta();

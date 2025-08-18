@@ -11,8 +11,11 @@
 #include "Types.h"
 #include "View2.h"
 #include "EntityPool.h"
+#include "InputManager.h"
 #include "MeshManager.h"
 #include "MaterialManager.h"
+
+#include <platform/Window.h>
 
 #include <components/TransformComponent.h>
 #include <components/ModelComponent.h>
@@ -31,6 +34,8 @@ public:
     Mat4 get_camera_proj_matrix(Entity camera);
     bgfx::ViewId get_gamera_proj_view_id(Entity camera);
     uint16_t get_camera_clear_flags(Entity camera);
+
+
 
     void load_mesh(Entity entity, const std::string& file_path);
     void load_material(Entity entity, const std::string& material_id);
@@ -51,6 +56,8 @@ public:
     // SETTERS
     void set_active_camera(Entity entity);
 
+    void set_input_manager_window(const std::shared_ptr<Window>& window);
+
     void set_position(Entity entity, Vec3 pos);
     void set_rotation(Entity entity, Vec3 angle_rot);
     void set_scale();
@@ -61,6 +68,8 @@ private:
     std::unique_ptr<CommandQueue> m_command_queue;
     std::unique_ptr<EntityPool> m_entity_pool;
     std::unique_ptr<EntitySparseSet> m_entity_sparse_set;
+
+    std::unique_ptr<InputManager> m_input_manager;
     std::unique_ptr<MeshManager> m_mesh_manager;
     std::unique_ptr<MaterialManager> m_material_manager;
 

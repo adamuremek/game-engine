@@ -1,6 +1,6 @@
 #include "App.h"
 
-
+#include <core/Systems.h>
 #include<iostream>
 
 App::App(const std::shared_ptr<World> &world)
@@ -25,9 +25,14 @@ void App::init() {
         return;
     }
 
-    // Create input manager
-    m_input_manager = std::make_unique<InputManager>(m_window);
-    m_input_manager->init();
+    // Attach window to world's input manager
+    m_world->set_input_manager_window(m_window);
+
+    // Finalize and lock in the systems
+    Systems::finalize();
+
+    // Run system startups
+    Systems::fire_startup(*m_world);
 
     std::cout << "App Initialized!" << std::endl;
     m_initialized = true;
@@ -42,6 +47,9 @@ void App::tick() {
 
     // Poll GLFW events and handle input actions
     m_input_manager->update();
+
+    // Execute "OnUpdate" callbacks
+    Systems::fire_update(*m_world, m_renderer->get_delta_time());
 
     // Execute buffered mutate commands for the world
     m_world->execute_commands();

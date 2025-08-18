@@ -15,6 +15,7 @@
 #include <components/TransformComponent.h>
 #include <components/ModelComponent.h>
 
+#include "GLFW/glfw3.h"
 #include "glm/gtc/type_ptr.hpp"
 
 Renderer::Renderer() : m_initialized(false) {}
@@ -58,6 +59,9 @@ bool Renderer::init(Window* window) {
     bgfx::setViewRect(0, 0, 0, window->get_width(), window->get_height());
     bgfx::setViewName(0, "Render View");
 
+    // Initialize the delta time
+    m_last_dt = glfwGetTime();
+
     m_initialized = true;
     return true;
 }
@@ -68,6 +72,15 @@ void Renderer::shutdown() {
         m_initialized = false;
     }
 }
+
+float Renderer::get_delta_time() {
+    double current_time = glfwGetTime();
+    double delta_time = current_time - m_last_dt;
+    m_last_dt = current_time;
+
+    return static_cast<float>(delta_time);
+}
+
 
 void Renderer::begin_frame() {
 }

@@ -35,10 +35,10 @@ public:
 
 class InputManager {
 public:
-    InputManager(const std::shared_ptr<Window>& window);
+    InputManager();
     ~InputManager() = default;
 
-    void init();
+    void set_window(const std::shared_ptr<Window>& window);
     void update();
 
     // Action definition
