@@ -13,7 +13,7 @@ TransformComponent::TransformComponent(const Vec3 &position) {
 }
 
 void TransformComponent::rotate(const Quat &rotation) {
-    set_local_rotation(rotation * get_local_rotation());
+    set_rotation(glm::normalize(get_rotation() * rotation));
 }
 
 void TransformComponent::rotate(const Vec3 &axis, float angle_rads) {
@@ -26,15 +26,15 @@ void TransformComponent::look_at(const Vec3 &target, const Vec3 &up) {
 }
 
 Vec3 TransformComponent::forward() {
-    return get_rotation() * Vec3(0, 0, -1);
+    return glm::normalize(get_rotation() * Vec3(0, 0, -1));
 }
 
 Vec3 TransformComponent::right() {
-    return get_rotation() * Vec3(1, 0, 0);
+    return glm::normalize(get_rotation() * Vec3(1, 0, 0));
 }
 
 Vec3 TransformComponent::up() {
-    return get_rotation() * Vec3(0, 1, 0);
+    return glm::normalize(get_rotation() * Vec3(0, 1, 0));
 }
 
 Vec3 TransformComponent::get_position() {

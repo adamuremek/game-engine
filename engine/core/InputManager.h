@@ -10,36 +10,13 @@
 #include <functional>
 
 
-class InputBinding {
-public:
-    InputType type;
-    int code;
-};
-
-class CompoundBinding {
-public:
-    std::vector<InputBinding> bindings;
-    bool requires_mouse_move = false;
-};
-
-class InputAction {
-public:
-    std::string name;
-    std::vector<CompoundBinding> compounds;
-
-    std::function<void()> on_press;
-    std::function<void()> on_release;
-    std::function<void()> on_hold;
-    std::function<void(Vec2)> on_continuous;
-};
-
 class InputManager {
 public:
     InputManager();
     ~InputManager() = default;
 
     void set_window(const std::shared_ptr<Window>& window);
-    void update();
+    void query_inputs();
 
     // Action definition
     void add_action(const std::string& name, KeyCode default_key);

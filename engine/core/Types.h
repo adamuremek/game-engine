@@ -4,6 +4,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <vector>
+#include <functional>
+#include <string>
 
 using Vec3 = glm::vec3;
 using Vec2 = glm::vec2;
@@ -73,4 +76,29 @@ enum class MouseButton {
     Middle,
     Unknown
 };
+
+
+class InputBinding {
+public:
+    InputType type;
+    int code;
+};
+
+class CompoundBinding {
+public:
+    std::vector<InputBinding> bindings;
+    bool requires_mouse_move = false;
+};
+
+class InputAction {
+public:
+    std::string name;
+    std::vector<CompoundBinding> compounds;
+
+    std::function<void()> on_press;
+    std::function<void()> on_release;
+    std::function<void()> on_hold;
+    std::function<void(Vec2)> on_continuous;
+};
+
 #endif //GAME_TYPES_H

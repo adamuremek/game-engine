@@ -19,8 +19,8 @@ int main() {
     app.init();
 
     while (!editor.should_close() && !app.should_close()) {
-        // Poll events from glfw
-        glfwPollEvents();
+        glfwPollEvents();// Poll events from glfw, one call polls all windows
+
         editor.tick();
         app.tick();
     }

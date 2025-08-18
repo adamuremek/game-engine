@@ -34,6 +34,9 @@ void App::init() {
     // Run system startups
     Systems::fire_startup(*m_world);
 
+    // Execute buffered mutate commands for the world from startup
+    m_world->execute_commands();
+
     std::cout << "App Initialized!" << std::endl;
     m_initialized = true;
 }
@@ -45,8 +48,8 @@ void App::tick() {
         return;
     }
 
-    // Poll GLFW events and handle input actions
-    m_input_manager->update();
+    // Query input actions
+    m_world->query_inputs();
 
     // Execute "OnUpdate" callbacks
     Systems::fire_update(*m_world, m_renderer->get_delta_time());

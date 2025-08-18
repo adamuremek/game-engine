@@ -26,12 +26,7 @@ void InputManager::set_window(const std::shared_ptr<Window> &window) {
     }
 }
 
-void InputManager::update() {
-    // Update preivous states
-    m_previous_key_states = m_current_key_states;
-    m_previous_mouse_pos = m_current_mouse_pos;
-    m_previous_action_states = m_action_states;
-
+void InputManager::query_inputs() {
     // Process actions and trigger callbacks
     Vec2 mouse_delta = get_mouse_delta();
 
@@ -46,6 +41,7 @@ void InputManager::update() {
                 break;
             }
         }
+
 
         // Determine the current state of the action
         ActionState previous_state = m_previous_action_states.count(action.name)
@@ -94,6 +90,10 @@ void InputManager::update() {
             action.on_continuous(mouse_delta);
         }
     }
+
+    // Update preivous states
+    m_previous_key_states = m_current_key_states;
+    m_previous_action_states = m_action_states;
 }
 
 void InputManager::add_action(const std::string &name, KeyCode default_key) {
@@ -170,7 +170,15 @@ Vec2 InputManager::get_mouse_position() {
 }
 
 Vec2 InputManager::get_mouse_delta() {
-    return m_current_mouse_pos - m_previous_mouse_pos;
+    Vec2 delta = m_current_mouse_pos - m_previous_mouse_pos;
+
+    const float epsilon = 2.0f;
+    if (glm::length(delta) < epsilon) {
+        return Vec2(0.0f);
+    }
+
+    const float sensitivity = 0.1f;
+    return delta * sensitivity;
 }
 
 
@@ -178,7 +186,11 @@ Vec2 InputManager::get_mouse_delta() {
 bool InputManager::is_compound_active(const CompoundBinding &compound) {
     // Check if all required kes/buttons are held down
     for (const auto& binding : compound.bindings) {
-        bool is_held = m_current_key_states.count(binding.code) && m_current_key_states[binding.code] == GLFW_PRESS;
+        bool is_held = false;
+        if (m_current_key_states.count(binding.code)) {
+            int state = m_current_key_states[binding.code];
+            is_held = (state == GLFW_PRESS || state == GLFW_REPEAT);
+        }
         if (!is_held) {
             return false;
         }
@@ -260,14 +272,22 @@ void InputManager::cursor_position_callback(GLFWwindow *window, double xpos, dou
 }
 
 void InputManager::handle_key(int key, int action) {
-    m_current_key_states[key] = action;
+    KeyCode internal_code = translate_glfw_key(key);
+    if (internal_code != KeyCode::Unknown) {
+        m_current_key_states[static_cast<int>(internal_code)] = action;
+    }
 }
 
 void InputManager::handle_mouse_button(int button, int action) {
-    m_current_key_states[button + MOUSE_BUTTON_OFFSET] = action;
+    MouseButton internal_button = translate_glfw_mouse_button(button);
+    if (internal_button != MouseButton::Unknown) {
+        m_current_key_states[static_cast<int>(internal_button) + MOUSE_BUTTON_OFFSET] = action;
+    }
 }
 
 void InputManager::handle_cursor_position(double xpos, double ypos) {
-    m_current_mouse_pos = Vec2(static_cast<float>(xpos), static_cast<float>(ypos));
+    Vec2 new_pos(static_cast<float>(xpos), static_cast<float>(ypos));
+    m_previous_mouse_pos = m_current_mouse_pos;
+    m_current_mouse_pos = new_pos;
 }
 

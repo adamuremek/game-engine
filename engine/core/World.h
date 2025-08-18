@@ -53,14 +53,33 @@ public:
     // ADDERS
     void add_component(Entity entity, ComponentType component_type);
 
+    // =================== Input Manager Interface =================== //
+    void query_inputs();
+    void add_input_action(const std::string& name, KeyCode key);
+    void add_input_action(const std::string& name, MouseButton btn);
+    bool input_action_pressd(const std::string& name);
+    bool input_action_held(const std::string& name);
+    Vec2 get_mouse_delta();
+    // =============================================================== //
+
+
     // SETTERS
     void set_active_camera(Entity entity);
 
     void set_input_manager_window(const std::shared_ptr<Window>& window);
 
+    // ====================== Transform Interface ==================== //
+    Vec3 get_forward(Entity entity);
+    Vec3 get_right(Entity entity);
+    Vec3 get_up(Entity entity);
+    Vec3 get_position(Entity entity);
+
     void set_position(Entity entity, Vec3 pos);
     void set_rotation(Entity entity, Vec3 angle_rot);
+    void set_rotation(Entity entity, Quat rot);
+    void rotate(Entity entity, Vec3 axis, float angle_rad);
     void set_scale();
+    // =============================================================== //
 
 
 private:
