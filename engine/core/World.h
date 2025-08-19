@@ -59,6 +59,7 @@ public:
     void add_input_action(const std::string& name, MouseButton btn);
     bool input_action_pressd(const std::string& name);
     bool input_action_held(const std::string& name);
+    bool input_action_released(const std::string& name);
     Vec2 get_mouse_delta();
     // =============================================================== //
 
@@ -67,6 +68,7 @@ public:
     void set_active_camera(Entity entity);
 
     void set_input_manager_window(const std::shared_ptr<Window>& window);
+    void set_cursor_mode(CursorMode mode);
 
     // ====================== Transform Interface ==================== //
     Vec3 get_forward(Entity entity);

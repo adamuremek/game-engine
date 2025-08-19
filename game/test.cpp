@@ -47,6 +47,14 @@ void test(World& world, float dt, State& data) {
     Entity cam = world.get_active_camera();
 
     if (world.input_action_held("PanCamera")) {
+        world.set_cursor_mode(CursorMode::Disabled);
+    }
+
+    if (world.input_action_released("PanCamera")) {
+        world.set_cursor_mode(CursorMode::Normal);
+    }
+
+    if (world.input_action_held("PanCamera")) {
         Vec2 delta = world.get_mouse_delta();
         // std::cout << std::fixed << std::setprecision(3) << "(x=" << delta.x << ", y=" << delta.y << ")" << std::endl;
 

@@ -16,6 +16,7 @@ public:
     ~InputManager() = default;
 
     void set_window(const std::shared_ptr<Window>& window);
+    void set_cursor_mode(CursorMode mode);
     void query_inputs();
 
     // Action definition
@@ -45,10 +46,12 @@ private:
     static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
     static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
     static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
+    static void scroll_callback(GLFWwindow* window, double x_offset, double y_offset);
 
     void handle_key(int key, int action);
     void handle_mouse_button(int button, int action);
     void handle_cursor_position(double xpos, double ypos);
+    void handle_scroll(double x_offset, double y_offset);
 
     std::shared_ptr<Window> m_window;
 
@@ -62,6 +65,7 @@ private:
 
     Vec2 m_current_mouse_pos;
     Vec2 m_previous_mouse_pos;
+    Vec2 m_mouse_delta;
 };
 
 #endif //GAME_INPUTMANAGER_H

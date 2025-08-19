@@ -109,6 +109,10 @@ void World::set_input_manager_window(const std::shared_ptr<Window> &window) {
     m_input_manager->set_window(window);
 }
 
+void World::set_cursor_mode(CursorMode mode) {
+    m_input_manager->set_cursor_mode(mode);
+}
+
 
 // ====================== Transform Interface ==================== //
 
@@ -156,8 +160,6 @@ Vec3 World::get_position(Entity entity) {
     return transform_comp->get_position();
 }
 
-
-
 void World::set_position(Entity entity, Vec3 pos) {
     m_command_queue->submit([this, entity, pos] {
         TransformComponent* transform_comp = m_transform_component_pool->get(entity);
@@ -199,7 +201,6 @@ void World::set_rotation(Entity entity, Quat rot) {
     });
 }
 
-
 void World::rotate(Entity entity, Vec3 axis, float angle_rad) {
     m_command_queue->submit([this, entity, axis, angle_rad] {
         TransformComponent* transform_comp = m_transform_component_pool->get(entity);
@@ -212,7 +213,6 @@ void World::rotate(Entity entity, Vec3 axis, float angle_rad) {
         transform_comp->rotate(axis, angle_rad);
     });
 }
-
 // =============================================================== //
 
 
@@ -246,7 +246,6 @@ void World::add_input_action(const std::string &name, KeyCode key) {
     m_input_manager->add_action(name, key);
 }
 
-
 void World::add_input_action(const std::string &name, MouseButton btn) {
     m_input_manager->add_action(name, btn);
 }
@@ -259,10 +258,13 @@ bool World::input_action_held(const std::string &name) {
     return m_input_manager->is_action_held(name);
 }
 
+bool World::input_action_released(const std::string &name) {
+    return m_input_manager->is_action_released(name);
+}
+
 Vec2 World::get_mouse_delta() {
     return m_input_manager->get_mouse_delta();
 }
-
 // =============================================================== //
 
 

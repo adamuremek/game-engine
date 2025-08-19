@@ -23,11 +23,46 @@ void InputManager::set_window(const std::shared_ptr<Window> &window) {
         glfwSetKeyCallback(m_window->get_glfw_window(), key_callback);
         glfwSetMouseButtonCallback(m_window->get_glfw_window(), mouse_button_callback);
         glfwSetCursorPosCallback(m_window->get_glfw_window(), cursor_position_callback);
+        glfwSetScrollCallback(m_window->get_glfw_window(), scroll_callback);
     }
+}
+
+void InputManager::set_cursor_mode(CursorMode mode) {
+    if (!m_window) {
+        return;
+    }
+
+    int glfw_mode;
+    switch (mode) {
+        case CursorMode::Normal:
+            glfw_mode = GLFW_CURSOR_NORMAL;
+            break;
+        case CursorMode::Hidden:
+            glfw_mode = GLFW_CURSOR_HIDDEN;
+            break;
+        case CursorMode::Disabled:
+            glfw_mode = GLFW_CURSOR_DISABLED;
+            break;
+        default:
+            glfw_mode = GLFW_CURSOR_NORMAL;
+            break;
+    }
+
+    glfwSetInputMode(m_window->get_glfw_window(), GLFW_CURSOR, glfw_mode);
 }
 
 void InputManager::query_inputs() {
     // Process actions and trigger callbacks
+    Vec2 raw_delta = m_current_mouse_pos - m_previous_mouse_pos;
+
+    const float epsilon = 2.0f;
+    if (glm::length(raw_delta) < epsilon) {
+        m_mouse_delta = Vec2(0.0f);
+    } else {
+        const float sensitivity = 0.1f;
+        m_mouse_delta = raw_delta * sensitivity;
+    }
+
     Vec2 mouse_delta = get_mouse_delta();
 
     for (auto& pair: m_actions) {
@@ -94,6 +129,7 @@ void InputManager::query_inputs() {
     // Update preivous states
     m_previous_key_states = m_current_key_states;
     m_previous_action_states = m_action_states;
+    m_previous_mouse_pos = m_current_mouse_pos;
 }
 
 void InputManager::add_action(const std::string &name, KeyCode default_key) {
@@ -170,18 +206,8 @@ Vec2 InputManager::get_mouse_position() {
 }
 
 Vec2 InputManager::get_mouse_delta() {
-    Vec2 delta = m_current_mouse_pos - m_previous_mouse_pos;
-
-    const float epsilon = 2.0f;
-    if (glm::length(delta) < epsilon) {
-        return Vec2(0.0f);
-    }
-
-    const float sensitivity = 0.1f;
-    return delta * sensitivity;
+    return m_mouse_delta;
 }
-
-
 
 bool InputManager::is_compound_active(const CompoundBinding &compound) {
     // Check if all required kes/buttons are held down
@@ -271,6 +297,12 @@ void InputManager::cursor_position_callback(GLFWwindow *window, double xpos, dou
     }
 }
 
+void InputManager::scroll_callback(GLFWwindow *window, double x_offset, double y_offset) {
+    if (InputManager* manager = static_cast<InputManager*>(glfwGetWindowUserPointer(window))) {
+        manager->handle_scroll(x_offset, y_offset);
+    }
+}
+
 void InputManager::handle_key(int key, int action) {
     KeyCode internal_code = translate_glfw_key(key);
     if (internal_code != KeyCode::Unknown) {
@@ -287,7 +319,11 @@ void InputManager::handle_mouse_button(int button, int action) {
 
 void InputManager::handle_cursor_position(double xpos, double ypos) {
     Vec2 new_pos(static_cast<float>(xpos), static_cast<float>(ypos));
-    m_previous_mouse_pos = m_current_mouse_pos;
     m_current_mouse_pos = new_pos;
 }
+
+void InputManager::handle_scroll(double x_offset, double y_offset) {
+
+}
+
 

@@ -92,11 +92,7 @@ std::shared_ptr<Material> MaterialManager::load_from_id(const std::string &mater
     mat->vsh = vsh;
     mat->fsh = fsh;
     mat->program = prog;
-
-    // Create common uniforms/sampler expected by your shaders
-    mat->u_base_color = bgfx::createUniform("u_BaseColor", bgfx::UniformType::Vec4);
-    mat->u_tint = bgfx::createUniform("u_Tint", bgfx::UniformType::Vec4);
-    mat->s_base_color = bgfx::createUniform("s_BaseColor", bgfx::UniformType::Sampler);
+    
 
     return mat;
 }

@@ -77,6 +77,12 @@ enum class MouseButton {
     Unknown
 };
 
+enum class CursorMode {
+    Normal,
+    Hidden,
+    Disabled
+};
+
 
 class InputBinding {
 public:
