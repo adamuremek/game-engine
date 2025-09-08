@@ -12,8 +12,8 @@
 #include <glm/glm.hpp>
 
 
-#include <components/TransformComponent.h>
-#include <components/ModelComponent.h>
+#include <components/TransformComponent.hpp>
+#include <components/ModelComponent.hpp>
 
 #include "GLFW/glfw3.h"
 #include "glm/gtc/type_ptr.hpp"
@@ -117,12 +117,7 @@ void Renderer::draw_frame(World &world) {
         bgfx::setTransform(glm::value_ptr(transform));
         bgfx::setVertexBuffer(0, model.mesh->vbh);
         bgfx::setIndexBuffer(model.mesh->ibh);
-        bgfx::setState(
-            BGFX_STATE_WRITE_RGB |
-            BGFX_STATE_WRITE_A |
-            BGFX_STATE_WRITE_Z |
-            BGFX_STATE_DEPTH_TEST_LESS |
-            BGFX_STATE_CULL_CW);
+        bgfx::setState(model.material->state);
         bgfx::submit(view_id, model.material->program);
     }
 }

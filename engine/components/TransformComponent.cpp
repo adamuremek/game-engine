@@ -1,4 +1,4 @@
-#include "TransformComponent.h"
+#include "TransformComponent.hpp"
 
 TransformComponent::TransformComponent() {
     set_position(Vec3(0.0f, 0.0f, 0.0f));

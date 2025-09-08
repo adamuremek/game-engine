@@ -27,9 +27,20 @@ public:
 
     // Common fixed pipeline state for this material
     uint64_t state =
-        BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z |
-        BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_CULL_CW | BGFX_STATE_MSAA;
+            BGFX_STATE_WRITE_RGB |
+            BGFX_STATE_WRITE_A |
+            BGFX_STATE_WRITE_Z |
+            BGFX_STATE_DEPTH_TEST_LESS |
+            BGFX_STATE_CULL_CW;
 
+
+    void set_backface_culling(bool enabled) {
+        if (enabled) {
+            state |= BGFX_STATE_CULL_CW;
+        } else {
+            state &= ~BGFX_STATE_CULL_CW;
+        }
+    }
 };
 
 #endif //GAME_MATERIAL_H

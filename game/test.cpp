@@ -19,6 +19,7 @@ void start_test(World& world) {
     world.set_rotation(cp, Vec3(-90.0f, 0.0f, 0.0f));
     world.load_mesh(cp, "C:/Users/aruem/Desktop/game-engine/models/Plane.fbx");
     world.load_material(cp, "coordinate_plane");
+    world.set_backface_culling(cp, false);
 
 
     // Create a testing cube

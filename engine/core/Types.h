@@ -107,4 +107,10 @@ public:
     std::function<void(Vec2)> on_continuous;
 };
 
+enum class BodyType {
+    Static,
+    Kinematic,
+    Dynamic
+};
+
 #endif //GAME_TYPES_H

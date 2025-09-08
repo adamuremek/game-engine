@@ -92,7 +92,7 @@ std::shared_ptr<Material> MaterialManager::load_from_id(const std::string &mater
     mat->vsh = vsh;
     mat->fsh = fsh;
     mat->program = prog;
-    
+
 
     return mat;
 }

@@ -1,4 +1,4 @@
-#include "CameraComponent.h"
+#include "CameraComponent.hpp"
 #include <glm/glm.hpp>
 
 Mat4 CameraComponent::get_view_matrix(Vec3 position, Vec3 forward, Vec3 up) {

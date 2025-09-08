@@ -14,12 +14,13 @@
 #include "InputManager.h"
 #include "MeshManager.h"
 #include "MaterialManager.h"
+#include "Material.h"
 
 #include <platform/Window.h>
 
-#include <components/TransformComponent.h>
-#include <components/ModelComponent.h>
-#include <components/CameraComponent.h>
+#include <components/TransformComponent.hpp>
+#include <components/ModelComponent.hpp>
+#include <components/CameraComponent.hpp>
 
 inline size_t MAX_ENTITIES = 10000;
 
@@ -27,31 +28,29 @@ class World {
 public:
     World();
 
-    // GETTERS
-    Entity get_active_camera() const;
+    // =================== General World Interface =================== //
+    Entity create_entity();
+    void execute_commands();
+    void add_component(Entity entity, ComponentType component_type);
+    // =============================================================== //
 
+
+    // ======================= Camera Interface ====================== //
+    Entity get_active_camera() const;
     Mat4 get_camera_view_matrix(Entity camera);
     Mat4 get_camera_proj_matrix(Entity camera);
     bgfx::ViewId get_gamera_proj_view_id(Entity camera);
     uint16_t get_camera_clear_flags(Entity camera);
+    void set_active_camera(Entity entity);
+    // =============================================================== //
 
 
-
+    // ======================= Model Interface ======================= //
     void load_mesh(Entity entity, const std::string& file_path);
     void load_material(Entity entity, const std::string& material_id);
+    void set_backface_culling(Entity entity, bool enabled);
+    // =============================================================== //
 
-    template<typename A, typename B>
-    View2<A,B> view() {
-        return View2<A, B>(*pool<A>(), *pool<B>());
-    }
-
-    void execute_commands();
-
-    // CREATION
-    Entity create_entity();
-
-    // ADDERS
-    void add_component(Entity entity, ComponentType component_type);
 
     // =================== Input Manager Interface =================== //
     void query_inputs();
@@ -61,14 +60,10 @@ public:
     bool input_action_held(const std::string& name);
     bool input_action_released(const std::string& name);
     Vec2 get_mouse_delta();
+    void set_cursor_mode(CursorMode mode);
+    void set_input_manager_window(const std::shared_ptr<Window>& window);
     // =============================================================== //
 
-
-    // SETTERS
-    void set_active_camera(Entity entity);
-
-    void set_input_manager_window(const std::shared_ptr<Window>& window);
-    void set_cursor_mode(CursorMode mode);
 
     // ====================== Transform Interface ==================== //
     Vec3 get_forward(Entity entity);
@@ -83,6 +78,10 @@ public:
     void set_scale();
     // =============================================================== //
 
+    template<typename A, typename B>
+    View2<A,B> view() {
+        return View2<A, B>(*pool<A>(), *pool<B>());
+    }
 
 private:
     Entity m_active_camera;

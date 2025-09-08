@@ -1,57 +1,91 @@
 cmake_minimum_required(VERSION 3.5)
+cmake_policy(SET CMP0091 NEW)         # Make MSVC_RUNTIME_LIBRARY effective
+cmake_policy(SET CMP0077 NEW)         # option() honors normal variables
+
 project(Game)
 
+# Use dynamic MSVC runtime: /MD (Release) and /MDd (Debug)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 
 include(FetchContent)
 
 # =========== Dependencies ===========
 
-# bgfx
-FetchContent_Declare(
-        bgfx
-        GIT_REPOSITORY https://github.com/widberg/bgfx.cmake.git
-        GIT_TAG master
-)
-
-# glfw
-FetchContent_Declare(
-        glfw
-        GIT_REPOSITORY https://github.com/glfw/glfw.git
-        GIT_TAG 3.4
-)
-
-# glm
-FetchContent_Declare(
-        glm
-        GIT_REPOSITORY https://github.com/g-truc/glm.git
-        GIT_TAG 1.0.1
-)
-
-# assimp
-FetchContent_Declare(
-        assimp
-        GIT_REPOSITORY https://github.com/assimp/assimp.git
-        GIT_TAG v6.0.2
-)
-
-# imgui
-FetchContent_Declare(
-        imgui
-        GIT_REPOSITORY https://github.com/ocornut/imgui.git
-        GIT_TAG v1.92.1
-)
-
 # Set options BEFORE making them available
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "")
 set(ASSIMP_INSTALL OFF CACHE BOOL "")
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "")
+set(ASSIMP_MSVC_STATIC_RUNTIME OFF CACHE BOOL "Use dynamic MSVC runtime for Assimp") # Force Assimp to use the dynamic runtime (/MD or /MDd)
 
 set(BGFX_INSTALL ON CACHE BOOL "Install bgfx")
 set(BGFX_BUILD_TOOLS ON CACHE BOOL "Build bgfx tools")
 
+# Jolt: ensure dynamic runtime (not /MT)
+set(MSVC_STATIC_RUNTIME OFF CACHE BOOL "Use dynamic runtime for Jolt")
 
-FetchContent_MakeAvailable(bgfx glfw glm assimp imgui)
+# bgfx
+FetchContent_Declare(
+    bgfx
+    GIT_REPOSITORY https://github.com/widberg/bgfx.cmake.git
+    GIT_TAG master
+)
+
+# glfw
+FetchContent_Declare(
+    glfw
+    GIT_REPOSITORY https://github.com/glfw/glfw.git
+    GIT_TAG 3.4
+)
+
+# glm
+FetchContent_Declare(
+    glm
+    GIT_REPOSITORY https://github.com/g-truc/glm.git
+    GIT_TAG 1.0.1
+)
+
+# assimp
+FetchContent_Declare(
+    assimp
+    GIT_REPOSITORY https://github.com/assimp/assimp.git
+    GIT_TAG v6.0.2
+)
+
+# imgui
+FetchContent_Declare(
+    imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG v1.92.1
+)
+
+# jolt physics
+FetchContent_Declare(
+    joltphysics
+    GIT_REPOSITORY https://github.com/jrouwe/JoltPhysics.git
+    GIT_TAG v5.3.0
+    SOURCE_SUBDIR Build
+)
+
+FetchContent_MakeAvailable(bgfx glfw glm assimp imgui joltphysics)
+
+# Add Jolt explicitly so our cache options apply and we can tweak its target
+FetchContent_GetProperties(joltphysics)
+if(NOT joltphysics_POPULATED)
+    FetchContent_Populate(joltphysics)
+    # Ensure dynamic runtime on the Jolt target as an extra guarantee
+    add_subdirectory(${joltphysics_SOURCE_DIR}/Build ${joltphysics_BINARY_DIR})
+endif()
+
+# Force Jolt to use /MD(/d) even if its internal defaults change
+if(MSVC AND TARGET Jolt)
+    set_property(TARGET Jolt PROPERTY
+            MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
 
 # =========== Shader Compilation ===========
 
@@ -174,4 +208,14 @@ target_include_directories(glad PUBLIC
 
 
 # =========== Linking ===========
-target_link_libraries(Game PRIVATE bgfx glfw glm assimp imgui glad)
+target_link_libraries(Game PRIVATE bgfx glfw glm assimp imgui glad Jolt)
+
+# Ensure the app also uses the dynamic runtime (helps if you add more targets)
+if(MSVC)
+    set_property(TARGET Game PROPERTY
+            MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+    set_property(TARGET imgui PROPERTY
+            MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+    set_property(TARGET glad PROPERTY
+            MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
